@@ -43,3 +43,29 @@ class ProductoCrearView(generics.CreateAPIView):
         if restaurante.dueno != self.request.user:
             raise PermissionDenied("No puede modificar el menú de otro restaurante")
         serializer.save(restaurante=restaurante)    
+
+class ProductoDetalleView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Producto.objects.all()
+    serializer_class = ProductoSerializer
+
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [AllowAny()]
+        return [rol_requerido("restaurante")()]
+
+    def _verificar_dueno(self, producto):
+        if producto.restaurante.dueno != self.request.user:
+            raise PermissionDenied("El producto pertenece a otro restaurante")
+
+    def perform_update(self, serializer):
+        self._verificar_dueno(serializer.instance)
+        serializer.save()    
+
+    def perform_destroy(self, instance):
+        self._verificar_dueno(instance)
+        try:
+            instance.delete()
+        except ProtectedError:
+            raise ValidationError(
+                "No se puede eliminar un producto con pedidos; márquelo como no disponible"
+            )        
