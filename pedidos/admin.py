@@ -1,3 +1,14 @@
 from django.contrib import admin
 
-# Register your models here.
+from pedidos.models import DetallePedido, Pedido
+
+
+class DetalleInline(admin.TabularInline):
+    model = DetallePedido
+    extra = 0
+
+
+@admin.register(Pedido)
+class PedidoAdmin(admin.ModelAdmin):
+    inlines = [DetalleInline]
+    list_display = ("id", "cliente", "restaurante", "estado", "total", "fecha")
