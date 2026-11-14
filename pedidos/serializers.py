@@ -34,6 +34,13 @@ class PedidoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pedido
         fields = [
-            "id", "cliente", "restaurante", "estado", "subtotal",
-            "costo_envio", "total", "fecha", "detalles"
+            "id",
+            "cliente",
+            "restaurante",
+            "estado",
+            "subtotal",
+            "costo_envio",
+            "total",
+            "fecha_pedido",
+            "detalles",
         ]
