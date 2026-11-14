@@ -1,11 +1,13 @@
 from django.shortcuts import render
-from django.shortcuts import get_object_or_404
 from rest_framework import generics
-from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import AllowAny
 from accesos.permissions import rol_requerido
 from catalogo.models import Restaurante
 from catalogo.serializers import ProductoSerializer, RestauranteSerializer
+from django.db.models import ProtectedError
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.permissions import SAFE_METHODS, AllowAny
+from catalogo.models import Producto, Restaurante
 
 # Create your views here.
 
@@ -31,3 +33,13 @@ class MenuView(generics.ListAPIView):
     def get_queryset(self):
         restaurante = get_object_or_404(Restaurante, pk=self.kwargs["restaurante_id"])
         return restaurante.productos.filter(disponible=True).order_by("nombre")
+    
+class ProductoCrearView(generics.CreateAPIView):
+    serializer_class = ProductoSerializer
+    permission_classes = [rol_requerido("restaurante")]
+
+    def perform_create(self, serializer):
+        restaurante = get_object_or_404(Restaurante, pk=self.kwargs["restaurante_id"])
+        if restaurante.dueno != self.request.user:
+            raise PermissionDenied("No puede modificar el menú de otro restaurante")
+        serializer.save(restaurante=restaurante)    
