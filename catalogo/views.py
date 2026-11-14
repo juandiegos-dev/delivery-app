@@ -59,4 +59,13 @@ class ProductoDetalleView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         self._verificar_dueno(serializer.instance)
-        serializer.save()        
+        serializer.save()    
+
+    def perform_destroy(self, instance):
+        self._verificar_dueno(instance)
+        try:
+            instance.delete()
+        except ProtectedError:
+            raise ValidationError(
+                "No se puede eliminar un producto con pedidos; márquelo como no disponible"
+            )        
