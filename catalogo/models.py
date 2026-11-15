@@ -26,4 +26,4 @@ class Producto(models.Model):
     disponible = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.nombre
+        return f"{self.nombre} - S/ {self.precio} ({self.restaurante.nombre})"
