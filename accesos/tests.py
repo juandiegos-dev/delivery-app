@@ -37,3 +37,15 @@ class AccesoTests(APITestCase):
 
     def test_ruta_protegida_sin_token(self):
         self.assertEqual(self.client.get("/api/auth/yo/").status_code, 401)
+
+#test de prueba de perfil autentificado
+
+    def test_perfil_con_token(self):
+        self.client.post("/api/auth/registro/", DATOS, format="json")
+        r = self.client.post("/api/auth/login/",{"username": "ana", "password": "clave123"},format="json"
+    )
+        token = r.data["token"]
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+        perfil = self.client.get("/api/auth/yo/")
+        self.assertEqual(perfil.status_code, 200)
+        self.assertEqual(perfil.data["username"], "ana")
