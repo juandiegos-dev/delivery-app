@@ -1,6 +1,5 @@
 from django.contrib import admin
-
-from pedidos.models import DetallePedido, Pedido
+from pedidos.models import Pedido, DetallePedido
 
 
 class DetalleInline(admin.TabularInline):
@@ -11,4 +10,11 @@ class DetalleInline(admin.TabularInline):
 @admin.register(Pedido)
 class PedidoAdmin(admin.ModelAdmin):
     inlines = [DetalleInline]
-    list_display = ("id", "cliente", "restaurante", "estado", "total", "fecha")
+    list_display = (
+        "id",
+        "cliente",
+        "restaurante",
+        "estado",
+        "total",
+        "fecha_pedido",
+    )
