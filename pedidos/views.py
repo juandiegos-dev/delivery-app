@@ -46,5 +46,22 @@ class PedidoDetalleView(generics.RetrieveAPIView):
         usuario = self.request.user
         return Pedido.objects.filter(Q(cliente=usuario) | Q(restaurante__dueno=usuario))
 
+class CambiarEstadoView(APIView):
+    permission_classes = [rol_requerido("restaurante")]
 
+    def patch(self, request, pk):
+        pedido = get_object_or_404(
+            Pedido,
+            pk=pk,
+            restaurante__dueno=request.user
+        )
+        entrada = CambioEstadoSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+
+        pedido = services.cambiar_estado(
+            pedido,
+            entrada.validated_data["estado"]
+        )
+
+        return Response(PedidoSerializer(pedido).data, status=200)
 
