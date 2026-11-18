@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'accesos',
     'catalogo',
     'pedidos',
-     'repartidores.apps.RepartidoresConfig',
+    'repartidores.apps.RepartidoresConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
