@@ -14,4 +14,5 @@ urlpatterns = [
 
     # Gestión de pedidos
     path("api/pedidos/", include("pedidos.urls")),
+    path("api/repartidores/", include("repartidores.urls")),
 ]
