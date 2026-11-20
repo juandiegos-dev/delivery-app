@@ -31,3 +31,33 @@ class EstadoPedidoAPITests(APITestCase):
         )
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(respuesta.data["estado"], "RECHAZADO")
+    def test_salto_no_permitido_es_conflicto(self):
+        respuesta = self.dueno.patch(
+            self.url, {"estado": "LISTO"}, format="json"
+        )
+        self.assertEqual(respuesta.status_code, 409)
+    def test_estado_desconocido_es_400(self):
+        respuesta = self.dueno.patch(
+            self.url, {"estado": "ENTREGADO"}, format="json"
+        )
+        self.assertEqual(respuesta.status_code, 400)
+    def test_cliente_no_puede_cambiar_estado(self):
+        self.assertEqual(
+            self.cliente.patch(
+                self.url, {"estado": "ACEPTADO"}, format="json"
+            ).status_code,
+            403
+        )
+    def test_restaurante_ajeno_recibe_404(self):
+        otro = crear_api("restaurante", username="otro-restaurante")
+        Restaurante.objects.create(
+            dueno=otro.usuario,
+            nombre="Otro",
+            direccion="Calle 2"
+        )
+        self.assertEqual(
+            otro.patch(
+                self.url, {"estado": "ACEPTADO"}, format="json"
+            ).status_code,
+            404
+        )
