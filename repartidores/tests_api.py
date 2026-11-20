@@ -1,4 +1,4 @@
-from rest_framework import APITestCase
+from rest_framework.test import APITestCase
 from config.pruebas import crear_api, crear_restaurante_con_menu
 from repartidores.models import PerfilRepartidor, PuntoRestaurante
 
