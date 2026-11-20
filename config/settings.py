@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'catalogo',
     'pedidos',
      'repartidores.apps.RepartidoresConfig',
+     'notificaciones',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -140,3 +141,4 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
 }
+
