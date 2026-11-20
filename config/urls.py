@@ -14,5 +14,10 @@ urlpatterns = [
 
     # Gestión de pedidos
     path("api/pedidos/", include("pedidos.urls")),
+
+    # Repartidores
     path("api/repartidores/", include("repartidores.urls")),
+
+    # Notificaciones internas
+    path("api/notificaciones/", include("notificaciones.urls")),
 ]
