@@ -1,0 +1,35 @@
+{% extends "frontend/base.html" %}
+{% block titulo %}Ingresar · Delivery App{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center"><div class="col-md-6 col-lg-4">
+  <div class="card shadow-sm"><div class="card-body">
+    <h1 class="h4">Iniciar sesión</h1>
+    <form id="formLogin">
+      <label for="usuario" class="form-label">Usuario</label>
+      <input id="usuario" class="form-control mb-3" required autocomplete="username">
+      <label for="clave" class="form-label">Contraseña</label>
+      <input id="clave" type="password" class="form-control mb-3" required autocomplete="current-password">
+      <button class="btn btn-primary" type="submit">Entrar</button>
+    </form><div id="resultado" role="status"></div>
+  </div></div><a href="/registro/" class="d-block mt-3">Crear nueva cuenta</a>
+</div></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const usuario = document.getElementById('usuario');
+const clave = document.getElementById('clave');
+document.getElementById('formLogin').addEventListener('submit', async e => {
+  e.preventDefault();
+  const resultado = document.getElementById('resultado');
+  try {
+    const respuesta = await Delivery.api('/api/auth/login/', { method: 'POST',
+      body: JSON.stringify({ username: usuario.value.trim(), password: clave.value }) });
+    Delivery.guardarToken(respuesta.token);
+    clave.value = '';
+    const perfil = await Delivery.api('/api/auth/yo/');
+    location.assign(perfil.rol === 'restaurante' ? '/panel-restaurante/' :
+      perfil.rol === 'repartidor' ? '/panel-repartidor/' : '/restaurantes/');
+  } catch (error) { Delivery.mostrar(resultado, error.message, false); }
+});
+</script>
+{% endblock %}
