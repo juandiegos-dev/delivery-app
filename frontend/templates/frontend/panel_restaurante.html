@@ -1,0 +1,54 @@
+{% extends "frontend/base.html" %}
+{% block titulo %}Panel restaurante · Delivery App{% endblock %}
+{% block contenido %}
+<h1 class="h3">Pedidos recibidos</h1>
+<p class="text-secondary">Los pedidos aparecen cuando un cliente los realiza. No se crean automáticamente.</p>
+<button id="refrescar" class="btn btn-outline-primary mb-3">Actualizar</button>
+<div id="resultado" role="status"></div><div id="pedidos" class="row g-3"></div>
+<hr><h2 class="h5">Notificaciones</h2><ul id="avisos" class="list-group"></ul>
+{% endblock %}
+{% block scripts %}
+<script>
+const pedidos=document.getElementById('pedidos');
+const avisos=document.getElementById('avisos');
+const resultado=document.getElementById('resultado');
+const refrescar=document.getElementById('refrescar');
+const transiciones={PENDIENTE:'ACEPTADO',ACEPTADO:'EN_PREPARACION',EN_PREPARACION:'LISTO'};
+async function cargar(){
+ if(!Delivery.token()){location.assign('/login/');return;}
+ try{
+  const [datos,notificaciones]=await Promise.all([
+    Delivery.api('/api/pedidos/recibidos/'),Delivery.api('/api/notificaciones/')]);
+  const lista=Array.isArray(datos)?datos:datos.results||[];
+  pedidos.replaceChildren();avisos.replaceChildren();
+  for(const p of lista){
+   const col=document.createElement('div');col.className='col-md-6';
+   const card=document.createElement('div');card.className='card p-3 h-100';
+   const titulo=document.createElement('h3');titulo.className='h5';titulo.textContent=`Pedido #${p.id}`;
+   const info=document.createElement('p');info.textContent=`${p.estado} · ${p.direccion_entrega} · S/ ${p.total}`;
+   card.append(titulo,info);
+   if(transiciones[p.estado]){
+    const btn=document.createElement('button');btn.className='btn btn-primary mb-2';
+    btn.textContent=`Avanzar a ${transiciones[p.estado]}`;
+    btn.onclick=async()=>{try{await Delivery.api(`/api/pedidos/${p.id}/estado/`,{method:'PATCH',
+      body:JSON.stringify({estado:transiciones[p.estado]})});await cargar();}
+      catch(e){Delivery.mostrar(resultado,e.message,false);}};card.append(btn);
+   }
+   if(['EN_PREPARACION','LISTO','EN_CAMINO'].includes(p.estado)){
+    const btn=document.createElement('button');btn.className='btn btn-outline-danger';
+    btn.textContent='Registrar pedido fallido';btn.onclick=async()=>{
+      const motivo=prompt('Motivo del fallo (mínimo 8 caracteres):');if(motivo===null)return;
+      try{await Delivery.api(`/api/pedidos/${p.id}/fallido/`,{method:'POST',body:JSON.stringify({motivo})});await cargar();}
+      catch(e){Delivery.mostrar(resultado,e.message,false);}
+    };card.append(btn);
+   }
+   col.append(card);pedidos.append(col);
+  }
+  const notis=Array.isArray(notificaciones)?notificaciones:notificaciones.results||[];
+  for(const n of notis){const li=document.createElement('li');li.className='list-group-item';li.textContent=n.mensaje;avisos.append(li);}
+  if(!lista.length)Delivery.mostrar(resultado,'No hay pedidos recibidos todavía.');
+ }catch(e){Delivery.mostrar(resultado,e.message,false);}
+}
+refrescar.addEventListener('click',cargar);cargar();
+</script>
+{% endblock %}
