@@ -1,106 +1,90 @@
-
 {% extends "frontend/base.html" %}
-
 {% block titulo %}Mis pedidos · Delivery App{% endblock %}
-
 {% block contenido %}
 <h1 class="h3">Mis pedidos</h1>
 <button id="refrescar" class="btn btn-outline-primary mb-3">Actualizar</button>
 <div id="resultado" role="status"></div>
 <div id="lista" class="row g-3"></div>
 {% endblock %}
-
 {% block scripts %}
 <script>
-const lista = document.getElementById('lista');
-const resultado = document.getElementById('resultado');
-const refrescar = document.getElementById('refrescar');
+    const lista = document.getElementById('lista');
+    const resultado = document.getElementById('resultado');
+    const refrescar = document.getElementById('refrescar');
 
-async function cargarPedidos() {
-    if (!Delivery.token()) {
-        location.assign('/login/');
-        return;
-    }
-
-    try {
-        const datos = await Delivery.api('/api/pedidos/mis-pedidos/');
-        const pedidos = Array.isArray(datos) ? datos : datos.results || [];
-
-        lista.replaceChildren();
-
-        if (!pedidos.length) {
-            Delivery.mostrar(resultado, 'Todavía no has realizado pedidos.');
+    async function cargarPedidos() {
+        if (!Delivery.token()) {
+            location.assign('/login/');
             return;
         }
 
-        for (const p of pedidos) {
-            const col = document.createElement('div');
-            col.className = 'col-md-6';
-
-            const card = document.createElement('div');
-            card.className = 'card p-3 h-100';
-
-            const titulo = document.createElement('h2');
-            titulo.className = 'h5';
-            titulo.textContent = `Pedido #${p.id}`;
-
-            const info = document.createElement('p');
-            info.textContent = `Estado: ${p.estado} · Total S/ ${p.total}`;
-
-            const enlace = document.createElement('a');
-            enlace.href = `/seguimiento/${p.id}/`;
-            enlace.className = 'btn btn-outline-secondary me-2';
-            enlace.textContent = 'Seguimiento';
-
-            card.append(titulo, info, enlace);
-
-            if (['PENDIENTE', 'ACEPTADO'].includes(p.estado)) {
-                const cancelar = document.createElement('button');
-                cancelar.className = 'btn btn-danger mt-2';
-                cancelar.type = 'button';
-                cancelar.textContent = 'Cancelar';
-
-                cancelar.addEventListener('click', async () => {
-                    const motivo = prompt(
-                        'Indica el motivo de cancelación (mínimo 8 caracteres):'
-                    );
-
-                    if (motivo === null) return;
-
-                    try {
-                        await Delivery.api(
-                            `/api/pedidos/${p.id}/cancelar/`,
-                            {
-                                method: 'POST',
-                                body: JSON.stringify({ motivo })
-                            }
-                        );
-
-                        Delivery.mostrar(
-                            resultado,
-                            `Pedido #${p.id} cancelado.`
-                        );
-
-                        await cargarPedidos();
-
-                    } catch (e) {
-                        Delivery.mostrar(resultado, e.message, false);
-                    }
-                });
-
-                card.append(cancelar);
+        try {
+            const datos = await Delivery.api('/api/pedidos/mis-pedidos/');
+            const pedidos = Array.isArray(datos) ? datos : datos.results || [];
+            lista.replaceChildren();
+            if (!pedidos.length) {
+                Delivery.mostrar(resultado, 'Todavía no has realizado pedidos.');
+                return;
             }
 
-            col.append(card);
-            lista.append(col);
+            for (const p of pedidos) {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                const card = document.createElement('div');
+                card.className = 'card p-3 h-100';
+                const titulo = document.createElement('h2');
+                titulo.className = 'h5';
+                titulo.textContent = `Pedido #${p.id}`;
+                const info = document.createElement('p');
+                info.textContent = `Estado: ${p.estado} · Total S/ ${p.total}`;
+                const enlace = document.createElement('a');
+                enlace.href = `/seguimiento/${p.id}/`;
+                enlace.className = 'btn btn-outline-secondary me-2';
+                enlace.textContent = 'Seguimiento';
+                card.append(titulo, info, enlace);
+                if (['PENDIENTE', 'ACEPTADO'].includes(p.estado)) {
+                    const cancelar = document.createElement('button');
+                    cancelar.className = 'btn btn-danger mt-2';
+                    cancelar.type = 'button';
+                    cancelar.textContent = 'Cancelar';
+                    cancelar.addEventListener('click', async () => {
+                        const motivo = prompt(
+                            'Indica el motivo de cancelación (mínimo 8 caracteres):'
+                        );
+                        if (motivo === null) return;
+                        try {
+                            await Delivery.api(
+                                `/api/pedidos/${p.id}/cancelar/`,
+                                {
+                                    method: 'POST',
+                                    body: JSON.stringify({ motivo })
+                                }
+                            );
+                            Delivery.mostrar(
+                                resultado,
+                                `Pedido #${p.id} cancelado.`
+                            );
+                            await cargarPedidos();
+                        } catch (e) {
+                            Delivery.mostrar(resultado, e.message, false);
+                        }
+                    });
+                    card.append(cancelar);
+                }
+                col.append(card);
+                lista.append(col);
+            }
+        } catch (e) {
+            Delivery.mostrar(resultado, e.message, false);
         }
-
-    } catch (e) {
-        Delivery.mostrar(resultado, e.message, false);
     }
-}
 
-refrescar.addEventListener('click', cargarPedidos);
-cargarPedidos();
+    refrescar.addEventListener('click', cargarPedidos);
+    cargarPedidos();
+    setInterval(() => {
+        if (Delivery.token() && !document.hidden) {
+            cargarPedidos();
+        }
+    }, 5000);
 </script>
 {% endblock %}

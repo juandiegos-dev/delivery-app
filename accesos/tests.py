@@ -31,19 +31,16 @@ class AccesoTests(APITestCase):
         self.assertEqual(r.status_code, 400)
 
     def test_password_en_el_limite_minimo(self):
-        corta = self.client.post("/api/auth/registro/", {**DATOS, "password": "12345"}, format="json")
-        valida = self.client.post("/api/auth/registro/", {**DATOS, "password": "123456"}, format="json")
-        self.assertEqual((corta.status_code, valida.status_code), (400, 201))
+        corta = self.client.post("/api/auth/registro/",{**DATOS, "password": "Kp#72xQ"},format="json")
+        valida = self.client.post("/api/auth/registro/",{**DATOS, "password": "Kp#72xQ9"},format="json")
+        self.assertEqual((corta.status_code, valida.status_code),(400, 201))
 
     def test_ruta_protegida_sin_token(self):
         self.assertEqual(self.client.get("/api/auth/yo/").status_code, 401)
 
-#test de prueba de perfil autentificado
-
     def test_perfil_con_token(self):
         self.client.post("/api/auth/registro/", DATOS, format="json")
-        r = self.client.post("/api/auth/login/",{"username": "ana", "password": "clave123"},format="json"
-    )
+        r = self.client.post("/api/auth/login/",{"username": "ana", "password": "clave123"},format="json")
         token = r.data["token"]
         self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
         perfil = self.client.get("/api/auth/yo/")

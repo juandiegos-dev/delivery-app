@@ -1,26 +1,42 @@
 {% load static %}
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block titulo %}Delivery App{% endblock %}</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>
+    {% block titulo %}Delivery App{% endblock %}
+  </title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{% static 'frontend/css/estilos.css' %}">
 </head>
-<body class="bg-light">
-  <nav class="navbar navbar-expand-lg bg-dark navbar-dark mb-4">
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark mb-4">
     <div class="container">
-      <a class="navbar-brand" href="/">Delivery App</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"><span class="navbar-toggler-icon"></span></button>
-      <div class="collapse navbar-collapse" id="menu">
-        <div class="navbar-nav me-auto">
-          <a class="nav-link" href="/restaurantes/">Restaurantes</a>
-          <a class="nav-link" href="/mis-pedidos/">Mis pedidos</a>
-          <a class="nav-link" href="/panel-restaurante/">Restaurante</a>
-          <a class="nav-link" href="/panel-repartidor/">Repartidor</a>
-          <a class="nav-link" href="/ubicacion/">GPS</a>
+      <a class="navbar-brand" href="/">
+        Delivery App
+      </a>
+      <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu" type="button">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="menu" class="collapse navbar-collapse">
+        <div id="navegacion" class="navbar-nav me-auto">
+          <a class="nav-link" href="/">
+            Inicio
+          </a>
+          <a class="nav-link" href="/restaurantes/">
+            Restaurantes
+          </a>
         </div>
-        <a class="btn btn-outline-light btn-sm me-2" href="/login/">Ingresar</a>
-        <button class="btn btn-warning btn-sm" id="salir" type="button">Salir</button>
+        <span id="perfilUsuario" class="text-white me-3"></span>
+        <a id="ingresar" class="btn btn-outline-light btn-sm" href="/login/">
+          Ingresar
+        </a>
+        <button id="salir" class="btn btn-warning btn-sm d-none">
+          Cerrar sesión
+        </button>
       </div>
     </div>
   </nav>
@@ -28,9 +44,65 @@
     <div id="avisoGlobal" role="status"></div>
     {% block contenido %}{% endblock %}
   </main>
+  <footer>
+    Delivery App · Universidad de Huánuco · 2026
+  </footer>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{% static 'frontend/js/api.js' %}"></script>
-  <script>document.getElementById('salir').addEventListener('click', Delivery.salir);</script>
+  <script>
+    (async function configurarMenu() {
+
+      const nav = document.getElementById('navegacion');
+      const salir = document.getElementById('salir');
+      const ingresar = document.getElementById('ingresar');
+
+      salir.onclick = Delivery.salir;
+
+      if (!Delivery.token()) return;
+
+      try {
+        const perfil = await Delivery.api('/api/auth/yo/');
+
+        ingresar.classList.add('d-none');
+        salir.classList.remove('d-none');
+
+        document.getElementById('perfilUsuario').textContent =
+          `${perfil.username} · ${perfil.rol}`;
+
+        const enlaces = {
+          cliente: [
+            ['Mis pedidos', '/mis-pedidos/']
+          ],
+          restaurante: [
+            ['Mi restaurante', '/panel-restaurante/']
+          ],
+          repartidor: [
+            ['Mis entregas', '/panel-repartidor/'],
+            ['GPS', '/ubicacion/']
+          ]
+        };
+
+        for (const [nombre, ruta] of enlaces[perfil.rol] || []) {
+
+          const enlace = document.createElement('a');
+
+          enlace.className = 'nav-link';
+          enlace.href = ruta;
+          enlace.textContent = nombre;
+
+          nav.append(enlace);
+        }
+
+      } catch (error) {
+        Delivery.mostrar(
+          document.getElementById('avisoGlobal'),
+          error.message,
+          false
+        );
+      }
+    })();
+  </script>
   {% block scripts %}{% endblock %}
 </body>
+
 </html>

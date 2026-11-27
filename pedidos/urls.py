@@ -12,4 +12,5 @@ urlpatterns = [
     path("<int:pk>/cancelar/", CancelarPedidoView.as_view()),
     path("<int:pk>/fallido/", FallarPedidoView.as_view()),
     path("<int:pk>/", views.PedidoDetalleView.as_view()),
+    path("cotizar/<int:restaurante_id>/",views.CotizarEnvioView.as_view()),
 ]

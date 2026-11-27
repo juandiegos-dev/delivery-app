@@ -1,76 +1,250 @@
 {% extends "frontend/base.html" %}
 {% block titulo %}Restaurantes · Delivery App{% endblock %}
 {% block contenido %}
-<h1 class="h3">Restaurantes y menús</h1>
-<p class="text-muted">Los restaurantes y productos aparecen cuando se registren en el sistema.</p>
-<label for="restaurante" class="form-label">Restaurante</label>
-<select id="restaurante" class="form-select mb-3"><option value="">Cargando...</option></select>
-<div class="row g-2" id="listaProductos"></div>
-<hr><h2 class="h5">Completar pedido</h2>
-<form id="formPedido">
- <label class="form-label" for="direccion">Dirección de entrega</label>
- <input class="form-control mb-2" id="direccion" required maxlength="255">
- <label class="form-label" for="observaciones">Observaciones (opcional)</label>
- <textarea class="form-control mb-2" id="observaciones"></textarea>
- <button type="submit" class="btn btn-primary">Enviar pedido</button>
-</form>
+<h1 class="h3 mb-4">Explorar restaurantes</h1>
 <div id="resultado" role="status"></div>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <label class="form-label">Restaurante</label>
+    <select id="restaurante" class="form-select mb-4">
+    </select>
+    <div id="productos" class="row g-3"></div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card resumen-pedido">
+      <div class="card-body">
+        <h2 class="h4">Mi carrito</h2>
+        <div id="carrito"></div>
+        <hr>
+        <p>Subtotal: S/ <span id="subtotal">0.00</span></p>
+        <p>Envío: S/ <span id="envio">--</span></p>
+        <h4>Total: S/ <span id="total">--</span></h4>
+        <small class="text-muted">El costo de envío puede variar al confirmar el pedido.</small>
+        <hr>
+        <form id="formPedido">
+          <label class="form-label">Dirección</label>
+          <input id="direccion" class="form-control mb-3" maxlength="255" required>
+          <label class="form-label">Observaciones</label>
+          <textarea id="observaciones" class="form-control mb-3"></textarea>
+          <button id="confirmar" class="btn btn-primary w-100">Confirmar pedido</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script>
-const resultado=document.getElementById('resultado');
-const direccion=document.getElementById('direccion');
-const observaciones=document.getElementById('observaciones');
-const formPedido=document.getElementById('formPedido');
-const restauranteEl=document.getElementById('restaurante');
-const menuEl=document.getElementById('listaProductos');
-let productos=[];
-async function listarRestaurantes() {
- try {
-   const datos=await Delivery.api('/api/restaurantes/');
-   const lista=Array.isArray(datos)?datos:datos.results||[];
-   restauranteEl.replaceChildren();
-   const inicial=new Option('Seleccione un restaurante',''); restauranteEl.add(inicial);
-   for(const r of lista) restauranteEl.add(new Option(`${r.nombre} - ${r.direccion}`,String(r.id)));
-   if(!lista.length) Delivery.mostrar(resultado,'Aún no se han registrado restaurantes.',false);
- } catch(e){Delivery.mostrar(resultado,e.message,false);}
-}
-restauranteEl.addEventListener('change',async()=>{
- menuEl.replaceChildren();productos=[];
- if(!restauranteEl.value)return;
- try {
-  const datos=await Delivery.api(`/api/restaurantes/${restauranteEl.value}/menu/`);
-  productos=Array.isArray(datos)?datos:datos.results||[];
-  for(const p of productos){
-   const col=document.createElement('div');col.className='col-md-6';
-   const card=document.createElement('div');card.className='card p-3 h-100';
-   const titulo=document.createElement('strong');titulo.textContent=p.nombre;
-   const precio=document.createElement('div');precio.textContent=`S/ ${p.precio}`;
-   const etiqueta=document.createElement('label');etiqueta.textContent='Cantidad';
-   etiqueta.className='form-label mt-2';
-   const cantidad=document.createElement('input');cantidad.type='number';cantidad.min='0';cantidad.max='50';
-   cantidad.value='0';cantidad.className='form-control';cantidad.dataset.productoId=p.id;
-   cantidad.disabled=!p.disponible;
-   if(!p.disponible){const aviso=document.createElement('small');aviso.textContent='No disponible';card.append(aviso);}
-   card.append(titulo,precio,etiqueta,cantidad);col.append(card);menuEl.append(col);
+  const $ = id => document.getElementById(id);
+
+  let productos = [];
+  let carrito = new Map();
+  let envio = null;
+  let versionMenu = 0;
+
+  async function cargarRestaurantes() {
+
+    try {
+      const datos = await Delivery.api('/api/restaurantes/');
+
+      const lista = Array.isArray(datos)
+        ? datos : datos.results || [];
+
+      $('restaurante').replaceChildren(
+        new Option('Selecciona un restaurante', '')
+      );
+
+      for (const r of lista) {
+        $('restaurante').add(
+          new Option(r.nombre, r.id)
+        );
+      }
+
+    } catch (error) {
+      Delivery.mostrar($('resultado'), error.message, false);
+    }
   }
-  if(!productos.length)Delivery.mostrar(resultado,'El restaurante aún no tiene productos.',false);
- } catch(e){Delivery.mostrar(resultado,e.message,false);}
-});
-formPedido.addEventListener('submit',async e=>{
- e.preventDefault();
- if(!Delivery.token()) {location.assign('/login/');return;}
- const items=Array.from(menuEl.querySelectorAll('input[data-producto-id]'))
-   .filter(x=>!x.disabled && Number.isInteger(Number(x.value)) && Number(x.value)>0)
-   .map(x=>({producto_id:Number(x.dataset.productoId),cantidad:Number(x.value)}));
- if(!restauranteEl.value || !items.length){Delivery.mostrar(resultado,'Selecciona restaurante y cantidades.',false);return;}
- try {
-  const pedido=await Delivery.api('/api/pedidos/',{method:'POST',body:JSON.stringify({
-   restaurante_id:Number(restauranteEl.value),direccion_entrega:direccion.value.trim(),
-   observaciones:observaciones.value.trim(),items})});
-  Delivery.mostrar(resultado,`Pedido #${pedido.id} registrado. Total S/ ${pedido.total}`);
- }catch(err){Delivery.mostrar(resultado,err.message,false);}
-});
-listarRestaurantes();
+
+  async function cargarMenu() {
+
+    const version = ++versionMenu;
+    const id = $('restaurante').value;
+
+    carrito.clear();
+    productos = [];
+    envio = null;
+
+    $('productos').replaceChildren();
+
+    actualizarCarrito();
+
+    if (!id) return;
+
+    try {
+      const datos = await Delivery.api(
+        `/api/restaurantes/${id}/menu/`
+      );
+
+      if (version !== versionMenu) return;
+
+      productos = Array.isArray(datos)
+        ? datos : datos.results || [];
+
+      for (const p of productos) {
+
+        const col = document.createElement('div');
+        col.className = 'col-md-6';
+
+        const card = document.createElement('div');
+        card.className = 'card card-body h-100';
+
+        const nombre = document.createElement('h5');
+        nombre.textContent = p.nombre;
+
+        const descripcion = document.createElement('p');
+        descripcion.className = 'text-muted';
+        descripcion.textContent = p.descripcion;
+
+        const precio = document.createElement('p');
+        precio.className = 'precio';
+        precio.textContent = `S/ ${p.precio}`;
+
+        const cantidad = document.createElement('input');
+
+        cantidad.type = 'number';
+        cantidad.min = 0;
+        cantidad.max = 50;
+        cantidad.step = 1;
+        cantidad.value = 0;
+        cantidad.className = 'form-control';
+
+        cantidad.oninput = () => {
+
+          const valor = Number(cantidad.value);
+
+          const n = Number.isFinite(valor)
+            ? Math.min(50, Math.max(0, Math.floor(valor)))
+            : 0;
+
+          cantidad.value = n;
+
+          if (n > 0) {
+            carrito.set(p.id, { producto: p, cantidad: n });
+          } else {
+            carrito.delete(p.id);
+          }
+
+          actualizarCarrito();
+        };
+
+        card.append(nombre, descripcion, precio, cantidad);
+        col.append(card);
+        $('productos').append(col);
+      }
+
+      if (Delivery.token()) {
+        const perfil = await Delivery.api('/api/auth/yo/');
+
+        if (perfil.rol === 'cliente') {
+
+          const cotizacion = await Delivery.api(
+            `/api/pedidos/cotizar/${id}/`
+          );
+
+          if (version !== versionMenu) return;
+
+          envio = Number(cotizacion.costo_envio);
+        }
+      }
+
+      actualizarCarrito();
+
+    } catch (error) {
+      Delivery.mostrar($('resultado'), error.message, false);
+    }
+  }
+
+  function actualizarCarrito() {
+
+    let subtotal = 0;
+
+    $('carrito').replaceChildren();
+
+    for (const item of carrito.values()) {
+
+      const importe =
+        Number(item.producto.precio) * item.cantidad;
+
+      subtotal += importe;
+
+      const fila = document.createElement('p');
+
+      fila.textContent =
+        `${item.cantidad} × ${item.producto.nombre} — S/ ${importe.toFixed(2)}`;
+
+      $('carrito').append(fila);
+    }
+
+    $('subtotal').textContent = subtotal.toFixed(2);
+
+    $('envio').textContent =
+      envio === null ? '--' : envio.toFixed(2);
+
+    $('total').textContent =
+      envio === null ? '--' : (subtotal + envio).toFixed(2);
+  }
+
+  $('restaurante').onchange = cargarMenu;
+
+  $('formPedido').onsubmit = async e => {
+
+    e.preventDefault();
+
+    if (!Delivery.token()) {
+      location.assign('/login/');
+      return;
+    }
+
+    if (!$('restaurante').value || !carrito.size) {
+      Delivery.mostrar(
+        $('resultado'),
+        'Selecciona un restaurante y productos.',
+        false
+      );
+      return;
+    }
+
+    $('confirmar').disabled = true;
+
+    try {
+
+      const pedido = await Delivery.api('/api/pedidos/', {
+
+        method: 'POST',
+
+        body: JSON.stringify({
+          restaurante_id: Number($('restaurante').value),
+          direccion_entrega: $('direccion').value.trim(),
+          observaciones: $('observaciones').value.trim(),
+
+          items: Array.from(carrito.values()).map(item => ({
+            producto_id: item.producto.id,
+            cantidad: item.cantidad
+          }))
+        })
+      });
+
+      location.assign(`/seguimiento/${pedido.id}/`);
+
+    } catch (error) {
+      Delivery.mostrar($('resultado'), error.message, false);
+
+    } finally {
+      $('confirmar').disabled = false;
+    }
+  };
+
+  cargarRestaurantes();
+  actualizarCarrito();
 </script>
 {% endblock %}

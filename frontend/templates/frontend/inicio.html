@@ -1,10 +1,56 @@
 {% extends "frontend/base.html" %}
 {% block titulo %}Inicio · Delivery App{% endblock %}
 {% block contenido %}
-<section class="p-5 bg-white rounded-3 shadow-sm">
-  <h1 class="display-6">Pide comida a tus restaurantes</h1>
-  <p class="lead">Explora el menú, realiza pedidos y sigue tu entrega.</p>
-  <a class="btn btn-primary" href="/restaurantes/">Ver restaurantes</a>
-  <a class="btn btn-outline-secondary" href="/registro/">Crear cuenta</a>
+<section class="hero mb-5">
+  <h1 class="display-4 fw-bold">
+    Tus comidas favoritas,<br>
+    hasta tu puerta.
+  </h1>
+  <p class="lead">
+    Explora restaurantes, realiza pedidos
+    y sigue tu entrega desde un solo lugar.
+  </p>
+  <a href="/restaurantes/" class="btn btn-light btn-lg">
+    Explorar restaurantes
+  </a>
+  <a href="/registro/" class="btn btn-outline-light btn-lg">
+    Crear cuenta
+  </a>
 </section>
+<h2 class="mb-4">¿Cómo funciona?</h2>
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h3 class="h5">01. Elige tu comida</h3>
+        <p>
+          Consulta los restaurantes y
+          selecciona tus productos favoritos.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h3 class="h5">02. Realiza tu pedido</h3>
+        <p>
+          Registra tu dirección y confirma
+          los productos seleccionados.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h3 class="h5">03. Recibe tu entrega</h3>
+        <p>
+          Consulta el estado de tu pedido
+          y la ubicación del repartidor.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
