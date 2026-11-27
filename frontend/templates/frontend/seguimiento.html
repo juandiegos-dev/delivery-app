@@ -1,0 +1,42 @@
+{% extends "frontend/base.html" %}
+{% block titulo %}Seguimiento · Delivery App{% endblock %}
+{% block contenido %}
+<h1 class="h3">Seguimiento del pedido</h1>
+<p id="estado">Consultando...</p>
+<div id="mapa" style="height:380px" class="border rounded mb-3"></div>
+<div id="resultado" role="status"></div>
+{{ pedido_id|json_script:"pedido-id" }}
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const estado=document.getElementById('estado');
+const resultado=document.getElementById('resultado');
+const pedidoId=JSON.parse(document.getElementById('pedido-id').textContent);
+const map=L.map('mapa').setView([-9.93,-76.24],13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+ maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(map);
+let marcadores=[];let recorrido=null;
+async function actualizar(){
+ if(!Delivery.token()){location.assign('/login/');return;}
+ try{
+  const datos=await Delivery.api(`/api/repartidores/pedidos/${pedidoId}/ruta/`);
+  estado.textContent=`Pedido #${datos.pedido} · ${datos.estado}`;
+  for(const m of marcadores)map.removeLayer(m);marcadores=[];
+  if(recorrido){map.removeLayer(recorrido);recorrido=null;}
+  const ubicaciones=[];
+  if(datos.restaurante){const p=[datos.restaurante.latitud,datos.restaurante.longitud];
+    marcadores.push(L.marker(p).addTo(map).bindPopup('Restaurante'));ubicaciones.push(p);}
+  if(datos.repartidor && datos.repartidor.latitud!==null && datos.repartidor.longitud!==null){
+    const p=[datos.repartidor.latitud,datos.repartidor.longitud];
+    marcadores.push(L.marker(p).addTo(map).bindPopup('Repartidor'));ubicaciones.push(p);}
+  const historial=(datos.trayecto||[]).map(p=>[p.latitud,p.longitud]);
+  if(historial.length){recorrido=L.polyline(historial,{color:'#0d6efd'}).addTo(map);ubicaciones.push(...historial);}
+  if(ubicaciones.length)map.fitBounds(ubicaciones,{padding:[28,28],maxZoom:15});
+  if(!ubicaciones.length)Delivery.mostrar(resultado,'No hay ubicación GPS registrada para este pedido.',false);
+ }catch(e){Delivery.mostrar(resultado,e.message,false);}
+}
+actualizar();setInterval(actualizar,5000);
+</script>
+{% endblock %}
