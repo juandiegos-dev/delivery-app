@@ -1,0 +1,76 @@
+{% extends "frontend/base.html" %}
+{% block titulo %}Restaurantes · Delivery App{% endblock %}
+{% block contenido %}
+<h1 class="h3">Restaurantes y menús</h1>
+<p class="text-muted">Los restaurantes y productos aparecen cuando se registren en el sistema.</p>
+<label for="restaurante" class="form-label">Restaurante</label>
+<select id="restaurante" class="form-select mb-3"><option value="">Cargando...</option></select>
+<div class="row g-2" id="listaProductos"></div>
+<hr><h2 class="h5">Completar pedido</h2>
+<form id="formPedido">
+ <label class="form-label" for="direccion">Dirección de entrega</label>
+ <input class="form-control mb-2" id="direccion" required maxlength="255">
+ <label class="form-label" for="observaciones">Observaciones (opcional)</label>
+ <textarea class="form-control mb-2" id="observaciones"></textarea>
+ <button type="submit" class="btn btn-primary">Enviar pedido</button>
+</form>
+<div id="resultado" role="status"></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const resultado=document.getElementById('resultado');
+const direccion=document.getElementById('direccion');
+const observaciones=document.getElementById('observaciones');
+const formPedido=document.getElementById('formPedido');
+const restauranteEl=document.getElementById('restaurante');
+const menuEl=document.getElementById('listaProductos');
+let productos=[];
+async function listarRestaurantes() {
+ try {
+   const datos=await Delivery.api('/api/restaurantes/');
+   const lista=Array.isArray(datos)?datos:datos.results||[];
+   restauranteEl.replaceChildren();
+   const inicial=new Option('Seleccione un restaurante',''); restauranteEl.add(inicial);
+   for(const r of lista) restauranteEl.add(new Option(`${r.nombre} - ${r.direccion}`,String(r.id)));
+   if(!lista.length) Delivery.mostrar(resultado,'Aún no se han registrado restaurantes.',false);
+ } catch(e){Delivery.mostrar(resultado,e.message,false);}
+}
+restauranteEl.addEventListener('change',async()=>{
+ menuEl.replaceChildren();productos=[];
+ if(!restauranteEl.value)return;
+ try {
+  const datos=await Delivery.api(`/api/restaurantes/${restauranteEl.value}/menu/`);
+  productos=Array.isArray(datos)?datos:datos.results||[];
+  for(const p of productos){
+   const col=document.createElement('div');col.className='col-md-6';
+   const card=document.createElement('div');card.className='card p-3 h-100';
+   const titulo=document.createElement('strong');titulo.textContent=p.nombre;
+   const precio=document.createElement('div');precio.textContent=`S/ ${p.precio}`;
+   const etiqueta=document.createElement('label');etiqueta.textContent='Cantidad';
+   etiqueta.className='form-label mt-2';
+   const cantidad=document.createElement('input');cantidad.type='number';cantidad.min='0';cantidad.max='50';
+   cantidad.value='0';cantidad.className='form-control';cantidad.dataset.productoId=p.id;
+   cantidad.disabled=!p.disponible;
+   if(!p.disponible){const aviso=document.createElement('small');aviso.textContent='No disponible';card.append(aviso);}
+   card.append(titulo,precio,etiqueta,cantidad);col.append(card);menuEl.append(col);
+  }
+  if(!productos.length)Delivery.mostrar(resultado,'El restaurante aún no tiene productos.',false);
+ } catch(e){Delivery.mostrar(resultado,e.message,false);}
+});
+formPedido.addEventListener('submit',async e=>{
+ e.preventDefault();
+ if(!Delivery.token()) {location.assign('/login/');return;}
+ const items=Array.from(menuEl.querySelectorAll('input[data-producto-id]'))
+   .filter(x=>!x.disabled && Number.isInteger(Number(x.value)) && Number(x.value)>0)
+   .map(x=>({producto_id:Number(x.dataset.productoId),cantidad:Number(x.value)}));
+ if(!restauranteEl.value || !items.length){Delivery.mostrar(resultado,'Selecciona restaurante y cantidades.',false);return;}
+ try {
+  const pedido=await Delivery.api('/api/pedidos/',{method:'POST',body:JSON.stringify({
+   restaurante_id:Number(restauranteEl.value),direccion_entrega:direccion.value.trim(),
+   observaciones:observaciones.value.trim(),items})});
+  Delivery.mostrar(resultado,`Pedido #${pedido.id} registrado. Total S/ ${pedido.total}`);
+ }catch(err){Delivery.mostrar(resultado,err.message,false);}
+});
+listarRestaurantes();
+</script>
+{% endblock %}
