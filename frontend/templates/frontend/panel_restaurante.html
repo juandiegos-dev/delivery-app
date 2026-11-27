@@ -1,54 +1,94 @@
 {% extends "frontend/base.html" %}
-{% block titulo %}Panel restaurante · Delivery App{% endblock %}
+{% load static %}
+{% block titulo %}Mi restaurante · Delivery App{% endblock %}
 {% block contenido %}
-<h1 class="h3">Pedidos recibidos</h1>
-<p class="text-secondary">Los pedidos aparecen cuando un cliente los realiza. No se crean automáticamente.</p>
-<button id="refrescar" class="btn btn-outline-primary mb-3">Actualizar</button>
-<div id="resultado" role="status"></div><div id="pedidos" class="row g-3"></div>
-<hr><h2 class="h5">Notificaciones</h2><ul id="avisos" class="list-group"></ul>
+<h1 class="h3 mb-4">Panel del restaurante</h1>
+<div id="resultado" role="status"></div>
+<div class="card card-body mb-4">
+  <h2 class="h5">Datos del restaurante</h2>
+  <form id="formRestaurante">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Nombre</label>
+        <input id="nombreRestaurante" class="form-control" maxlength="100" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Dirección</label>
+        <input id="direccionRestaurante" class="form-control" maxlength="200" required>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-3">Guardar restaurante</button>
+  </form>
+</div>
+<div id="administracion" class="d-none">
+  <div class="card card-body mb-4">
+    <h2 class="h5">Ubicación del restaurante</h2>
+    <form id="formUbicacion">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Latitud</label>
+          <input id="latitud" type="number" step="any" min="-90" max="90" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Longitud</label>
+          <input id="longitud" type="number" step="any" min="-180" max="180" class="form-control" required>
+        </div>
+      </div>
+      <button class="btn btn-outline-primary mt-3" type="button" id="obtenerGPS">Obtener ubicación actual</button>
+      <button class="btn btn-primary mt-3">Guardar ubicación</button>
+    </form>
+  </div>
+  <div class="card card-body mb-4">
+    <h2 class="h5 mb-3">Administrar productos</h2>
+    <form id="formProducto">
+      <input type="hidden" id="productoId">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nombre</label>
+          <input id="nombreProducto" class="form-control" maxlength="100" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Precio</label>
+          <input id="precioProducto" type="number" step="0.01" min="0.01" class="form-control" required>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <label class="form-check">
+            <input id="disponibleProducto" type="checkbox" class="form-check-input" checked>Disponible
+          </label>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Descripción</label>
+          <textarea id="descripcionProducto" maxlength="300" class="form-control"></textarea>
+        </div>
+      </div>
+      <button class="btn btn-primary mt-3">Guardar producto</button>
+      <button id="limpiarProducto" type="button" class="btn btn-outline-secondary mt-3">Nuevo producto</button>
+    </form>
+    <hr>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Precio</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaProductos"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card card-body mb-4">
+    <h2 class="h5">Pedidos recibidos</h2>
+    <div id="pedidos" class="row g-3"></div>
+  </div>
+  <div class="card card-body">
+    <h2 class="h5">Notificaciones</h2>
+    <ul id="avisos" class="list-group"></ul>
+  </div>
+</div>
 {% endblock %}
 {% block scripts %}
-<script>
-const pedidos=document.getElementById('pedidos');
-const avisos=document.getElementById('avisos');
-const resultado=document.getElementById('resultado');
-const refrescar=document.getElementById('refrescar');
-const transiciones={PENDIENTE:'ACEPTADO',ACEPTADO:'EN_PREPARACION',EN_PREPARACION:'LISTO'};
-async function cargar(){
- if(!Delivery.token()){location.assign('/login/');return;}
- try{
-  const [datos,notificaciones]=await Promise.all([
-    Delivery.api('/api/pedidos/recibidos/'),Delivery.api('/api/notificaciones/')]);
-  const lista=Array.isArray(datos)?datos:datos.results||[];
-  pedidos.replaceChildren();avisos.replaceChildren();
-  for(const p of lista){
-   const col=document.createElement('div');col.className='col-md-6';
-   const card=document.createElement('div');card.className='card p-3 h-100';
-   const titulo=document.createElement('h3');titulo.className='h5';titulo.textContent=`Pedido #${p.id}`;
-   const info=document.createElement('p');info.textContent=`${p.estado} · ${p.direccion_entrega} · S/ ${p.total}`;
-   card.append(titulo,info);
-   if(transiciones[p.estado]){
-    const btn=document.createElement('button');btn.className='btn btn-primary mb-2';
-    btn.textContent=`Avanzar a ${transiciones[p.estado]}`;
-    btn.onclick=async()=>{try{await Delivery.api(`/api/pedidos/${p.id}/estado/`,{method:'PATCH',
-      body:JSON.stringify({estado:transiciones[p.estado]})});await cargar();}
-      catch(e){Delivery.mostrar(resultado,e.message,false);}};card.append(btn);
-   }
-   if(['EN_PREPARACION','LISTO','EN_CAMINO'].includes(p.estado)){
-    const btn=document.createElement('button');btn.className='btn btn-outline-danger';
-    btn.textContent='Registrar pedido fallido';btn.onclick=async()=>{
-      const motivo=prompt('Motivo del fallo (mínimo 8 caracteres):');if(motivo===null)return;
-      try{await Delivery.api(`/api/pedidos/${p.id}/fallido/`,{method:'POST',body:JSON.stringify({motivo})});await cargar();}
-      catch(e){Delivery.mostrar(resultado,e.message,false);}
-    };card.append(btn);
-   }
-   col.append(card);pedidos.append(col);
-  }
-  const notis=Array.isArray(notificaciones)?notificaciones:notificaciones.results||[];
-  for(const n of notis){const li=document.createElement('li');li.className='list-group-item';li.textContent=n.mensaje;avisos.append(li);}
-  if(!lista.length)Delivery.mostrar(resultado,'No hay pedidos recibidos todavía.');
- }catch(e){Delivery.mostrar(resultado,e.message,false);}
-}
-refrescar.addEventListener('click',cargar);cargar();
-</script>
+<script src="{% static 'frontend/js/panel-restaurante.js' %}"></script>
 {% endblock %}

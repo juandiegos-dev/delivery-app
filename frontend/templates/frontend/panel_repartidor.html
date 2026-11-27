@@ -5,40 +5,47 @@
 <p class="text-secondary">Las asignaciones son creadas por el backend cuando un pedido queda LISTO.</p>
 <button id="refrescar" class="btn btn-outline-primary mb-3">Actualizar asignaciones</button>
 <a href="/ubicacion/" class="btn btn-outline-success mb-3">Publicar GPS</a>
-<div id="resultado" role="status"></div><div id="asignaciones" class="row g-3"></div>
+<div id="resultado" role="status"></div>
+<div id="asignaciones" class="row g-3"></div>
 {% endblock %}
 {% block scripts %}
 <script>
-const asignaciones=document.getElementById('asignaciones');
-const resultado=document.getElementById('resultado');
-const refrescar=document.getElementById('refrescar');
-async function cargar(){
- if(!Delivery.token()){location.assign('/login/');return;}
- try{
-  const datos=await Delivery.api('/api/repartidores/mis-asignaciones/');
-  const lista=Array.isArray(datos)?datos:datos.results||[];
-  asignaciones.replaceChildren();
-  if(!lista.length){Delivery.mostrar(resultado,'No tienes entregas activas.');return;}
-  for(const a of lista){
-   const col=document.createElement('div');col.className='col-md-6';
-   const card=document.createElement('div');card.className='card p-3 h-100';
-   const titulo=document.createElement('h2');titulo.className='h5';titulo.textContent=`Pedido #${a.pedido}`;
-   const info=document.createElement('p');info.textContent=`Estado ${a.estado} · Dirección: ${a.direccion_entrega}`;
-   card.append(titulo,info);
-   const nombre=a.estado==='LISTO'?'Iniciar reparto':'Confirmar entrega';
-   const accion=a.estado==='LISTO'?'iniciar-reparto':'confirmar-entrega';
-   const btn=document.createElement('button');btn.textContent=nombre;
-   btn.className='btn btn-primary mb-2';btn.onclick=async()=>{
-     try{await Delivery.api(`/api/repartidores/pedidos/${a.pedido}/${accion}/`,{method:'POST',body:'{}'});await cargar();}
-     catch(e){Delivery.mostrar(resultado,e.message,false);}
-   };
-   card.append(btn);
-   const ver=document.createElement('a');ver.href=`/seguimiento/${a.pedido}/`;
-   ver.className='btn btn-outline-secondary';ver.textContent='Ver seguimiento';card.append(ver);
-   col.append(card);asignaciones.append(col);
+  const asignaciones = document.getElementById('asignaciones');
+  const resultado = document.getElementById('resultado');
+  const refrescar = document.getElementById('refrescar');
+  async function cargar() {
+    if (!Delivery.token()) { location.assign('/login/'); return; }
+    try {
+      const datos = await Delivery.api('/api/repartidores/mis-asignaciones/');
+      const lista = Array.isArray(datos) ? datos : datos.results || [];
+      asignaciones.replaceChildren();
+      if (!lista.length) { Delivery.mostrar(resultado, 'No tienes entregas activas.'); return; }
+      for (const a of lista) {
+        const col = document.createElement('div'); col.className = 'col-md-6';
+        const card = document.createElement('div'); card.className = 'card p-3 h-100';
+        const titulo = document.createElement('h2'); titulo.className = 'h5'; titulo.textContent = `Pedido #${a.pedido}`;
+        const info = document.createElement('p'); info.textContent = `Estado ${a.estado} · Dirección: ${a.direccion_entrega}`;
+        card.append(titulo, info);
+        const nombre = a.estado === 'LISTO' ? 'Iniciar reparto' : 'Confirmar entrega';
+        const accion = a.estado === 'LISTO' ? 'iniciar-reparto' : 'confirmar-entrega';
+        const btn = document.createElement('button'); btn.textContent = nombre;
+        btn.className = 'btn btn-primary mb-2'; btn.onclick = async () => {
+          try { await Delivery.api(`/api/repartidores/pedidos/${a.pedido}/${accion}/`, { method: 'POST', body: '{}' }); await cargar(); }
+          catch (e) { Delivery.mostrar(resultado, e.message, false); }
+        };
+        card.append(btn);
+        const ver = document.createElement('a'); ver.href = `/seguimiento/${a.pedido}/`;
+        ver.className = 'btn btn-outline-secondary'; ver.textContent = 'Ver seguimiento'; card.append(ver);
+        col.append(card); asignaciones.append(col);
+      }
+    } catch (e) { Delivery.mostrar(resultado, e.message, false); }
   }
- }catch(e){Delivery.mostrar(resultado,e.message,false);}
-}
-refrescar.addEventListener('click',cargar);cargar();
+  refrescar.addEventListener('click', cargar);
+  cargar();
+  setInterval(() => {
+    if (Delivery.token() && !document.hidden) {
+      cargar();
+    }
+  }, 5000);
 </script>
 {% endblock %}

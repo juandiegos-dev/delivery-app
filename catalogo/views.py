@@ -69,3 +69,25 @@ class ProductoDetalleView(generics.RetrieveUpdateDestroyAPIView):
             raise ValidationError(
                 "No se puede eliminar un producto con pedidos; márquelo como no disponible"
             )        
+
+class MiRestauranteView(generics.RetrieveUpdateAPIView):
+
+    serializer_class = RestauranteSerializer
+    permission_classes = [rol_requerido("restaurante")]
+
+    def get_object(self):
+        return get_object_or_404(
+            Restaurante,
+            dueno=self.request.user
+        )
+
+
+class MisProductosView(generics.ListAPIView):
+
+    serializer_class = ProductoSerializer
+    permission_classes = [rol_requerido("restaurante")]
+
+    def get_queryset(self):
+        return Producto.objects.filter(
+            restaurante__dueno=self.request.user
+        ).order_by("nombre")

@@ -2,40 +2,140 @@
 {% block titulo %}Ubicación · Delivery App{% endblock %}
 {% block contenido %}
 <h1 class="h3">Compartir mi ubicación</h1>
-<p class="text-secondary">Para el GPS del navegador permite geolocalización y confirma los permisos. También puedes introducir coordenadas manualmente.</p>
-<div class="card"><div class="card-body">
- <label for="lat" class="form-label">Latitud</label><input id="lat" type="number" step="any" min="-90" max="90" class="form-control mb-2">
- <label for="lon" class="form-label">Longitud</label><input id="lon" type="number" step="any" min="-180" max="180" class="form-control mb-2">
- <label class="form-check mb-3"><input id="disponible" type="checkbox" class="form-check-input"> Disponible para asignación</label>
- <button id="gps" class="btn btn-outline-primary">Usar GPS del navegador</button>
- <button id="guardar" class="btn btn-success">Guardar ubicación</button>
- <div id="resultado" role="status"></div>
-</div></div>
+<p class="text-secondary">Para el GPS del navegador permite geolocalización y confirma los permisos. También puedes
+  introducir coordenadas manualmente.</p>
+<div class="card">
+  <div class="card-body">
+    <label for="lat" class="form-label">Latitud</label><input id="lat" type="number" step="any" min="-90" max="90"
+      class="form-control mb-2">
+    <label for="lon" class="form-label">Longitud</label><input id="lon" type="number" step="any" min="-180" max="180"
+      class="form-control mb-2">
+    <label class="form-check mb-3"><input id="disponible" type="checkbox" class="form-check-input"> Disponible para
+      asignación</label>
+    <button id="gps" class="btn btn-outline-primary">Usar GPS del navegador</button>
+    <button id="guardar" class="btn btn-success">Guardar ubicación</button>
+    <button id="iniciarGPS" type="button" class="btn btn-primary mt-2">Activar GPS continuo</button>
+    <button id="detenerGPS" type="button" class="btn btn-outline-danger mt-2" disabled>Detener GPS</button>
+    <div id="resultado" role="status"></div>
+  </div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script>
-const lat=document.getElementById('lat');
-const lon=document.getElementById('lon');
-const disponible=document.getElementById('disponible');
-const gps=document.getElementById('gps');
-const guardar=document.getElementById('guardar');
-const resultado=document.getElementById('resultado');
-gps.onclick=()=>{
- if(!navigator.geolocation){Delivery.mostrar(resultado,'El navegador no admite geolocalización.',false);return;}
- navigator.geolocation.getCurrentPosition(p=>{
-   lat.value=p.coords.latitude.toFixed(6);lon.value=p.coords.longitude.toFixed(6);
-   Delivery.mostrar(resultado,'Coordenadas obtenidas; pulsa Guardar ubicación.');
- },e=>Delivery.mostrar(resultado,e.message,false),{enableHighAccuracy:true});
-};
-guardar.onclick=async()=>{
- if(lat.value===''||lon.value===''){Delivery.mostrar(resultado,'Ingresa latitud y longitud.',false);return;}
- try{const d=await Delivery.api('/api/repartidores/mi-ubicacion/',{method:'PUT',body:JSON.stringify({
-   latitud:Number(lat.value),longitud:Number(lon.value),disponible:disponible.checked})});
-   Delivery.mostrar(resultado,`Ubicación actualizada: ${d.latitud}, ${d.longitud}`);
- }catch(e){Delivery.mostrar(resultado,e.message,false);}
-};
-(async()=>{if(!Delivery.token())return;try{const d=await Delivery.api('/api/repartidores/mi-ubicacion/');
- if(d.latitud!==null)lat.value=d.latitud;if(d.longitud!==null)lon.value=d.longitud;
- disponible.checked=!!d.disponible;}catch(e){Delivery.mostrar(resultado,e.message,false);}})();
+  const lat = document.getElementById('lat');
+  const lon = document.getElementById('lon');
+  const disponible = document.getElementById('disponible');
+  const gps = document.getElementById('gps');
+  const guardar = document.getElementById('guardar');
+  const resultado = document.getElementById('resultado');
+  gps.onclick = () => {
+    if (!navigator.geolocation) { Delivery.mostrar(resultado, 'El navegador no admite geolocalización.', false); return; }
+    navigator.geolocation.getCurrentPosition(p => {
+      lat.value = p.coords.latitude.toFixed(6); lon.value = p.coords.longitude.toFixed(6);
+      Delivery.mostrar(resultado, 'Coordenadas obtenidas; pulsa Guardar ubicación.');
+    }, e => Delivery.mostrar(resultado, e.message, false), { enableHighAccuracy: true });
+  };
+  guardar.onclick = async () => {
+    if (lat.value === '' || lon.value === '') { Delivery.mostrar(resultado, 'Ingresa latitud y longitud.', false); return; }
+    try {
+      const d = await Delivery.api('/api/repartidores/mi-ubicacion/', {
+        method: 'PUT', body: JSON.stringify({
+          latitud: Number(lat.value), longitud: Number(lon.value), disponible: disponible.checked
+        })
+      });
+      Delivery.mostrar(resultado, `Ubicación actualizada: ${d.latitud}, ${d.longitud}`);
+    } catch (e) { Delivery.mostrar(resultado, e.message, false); }
+  };
+  (async () => {
+    if (!Delivery.token()) return; try {
+      const d = await Delivery.api('/api/repartidores/mi-ubicacion/');
+      if (d.latitud !== null) lat.value = d.latitud; if (d.longitud !== null) lon.value = d.longitud;
+      disponible.checked = !!d.disponible;
+    } catch (e) { Delivery.mostrar(resultado, e.message, false); }
+  })();
+
+  let gpsActivo = null;
+  let ultimoEnvio = 0;
+  let enviandoGPS = false;
+  const iniciarGPS = document.getElementById('iniciarGPS');
+  const detenerGPS = document.getElementById('detenerGPS');
+  function finalizarGPS() {
+    if (gpsActivo !== null) {
+      navigator.geolocation.clearWatch(gpsActivo);
+      gpsActivo = null;
+    }
+    iniciarGPS.disabled = false;
+    detenerGPS.disabled = true;
+  }
+  iniciarGPS.onclick = async () => {
+    if (!navigator.geolocation) {
+      Delivery.mostrar(
+        resultado,
+        'GPS no disponible.',
+        false
+      );
+      return;
+    }
+    const perfil = await Delivery.perfil();
+    if (!perfil || perfil.rol !== 'repartidor') return;
+    iniciarGPS.disabled = true;
+    detenerGPS.disabled = false;
+    gpsActivo = navigator.geolocation.watchPosition(
+      async posicion => {
+        if (enviandoGPS || !Delivery.token()) return;
+        const ahora = Date.now();
+        if (ahora - ultimoEnvio < 5000) return;
+        ultimoEnvio = ahora;
+        enviandoGPS = true;
+        lat.value = posicion.coords.latitude.toFixed(6);
+        lon.value = posicion.coords.longitude.toFixed(6);
+        try {
+          await Delivery.api(
+            '/api/repartidores/mi-ubicacion/',
+            {
+              method: 'PUT',
+              body: JSON.stringify({
+                latitud: Number(lat.value),
+                longitud: Number(lon.value)
+              })
+            }
+          );
+          Delivery.mostrar(
+            resultado,
+            'GPS activo. Ubicación actualizada.'
+          );
+        } catch (error) {
+          Delivery.mostrar(
+            resultado,
+            error.message,
+            false
+          );
+
+        } finally {
+          enviandoGPS = false;
+        }
+      },
+      error => {
+        finalizarGPS();
+        Delivery.mostrar(
+          resultado,
+          error.message,
+          false
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000
+      }
+    );
+  };
+  detenerGPS.onclick = () => {
+    finalizarGPS();
+    Delivery.mostrar(
+      resultado,
+      'GPS continuo desactivado.'
+    );
+  };
+  window.addEventListener('pagehide', finalizarGPS);
 </script>
 {% endblock %}

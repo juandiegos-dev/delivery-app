@@ -65,3 +65,23 @@ class CambiarEstadoView(APIView):
 
         return Response(PedidoSerializer(pedido).data, status=200)
 
+class CotizarEnvioView(APIView):
+
+    permission_classes = [rol_requerido("cliente")]
+
+    def get(self, request, restaurante_id):
+
+        from catalogo.models import Restaurante
+        from pedidos.tarifas import calcular_tarifa_envio
+
+        restaurante = get_object_or_404(
+            Restaurante,
+            pk=restaurante_id
+        )
+
+        costo = calcular_tarifa_envio(restaurante)
+
+        return Response({
+            "restaurante": restaurante.id,
+            "costo_envio": str(costo)
+        })
