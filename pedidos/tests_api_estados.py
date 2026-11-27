@@ -38,7 +38,7 @@ class EstadoPedidoAPITests(APITestCase):
         self.assertEqual(respuesta.status_code, 409)
     def test_estado_desconocido_es_400(self):
         respuesta = self.dueno.patch(
-            self.url, {"estado": "ENTREGADO"}, format="json"
+            self.url, {"estado": "NO_EXISTE"}, format="json"
         )
         self.assertEqual(respuesta.status_code, 400)
     def test_cliente_no_puede_cambiar_estado(self):

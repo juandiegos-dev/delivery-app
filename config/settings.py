@@ -32,11 +32,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'frontend',
     'rest_framework',
     'rest_framework.authtoken',
     'accesos',
     'catalogo',
     'pedidos',
+    'repartidores.apps.RepartidoresConfig',
+    'notificaciones',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

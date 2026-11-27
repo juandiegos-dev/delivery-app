@@ -3,6 +3,7 @@ from django.urls import path
 from pedidos import views
 from pedidos.vistas_cancelaciones import CancelarPedidoView
 
+
 urlpatterns = [
     path("", views.PedidoCrearView.as_view()),
     path("mis-pedidos/", views.MisPedidosView.as_view()),
