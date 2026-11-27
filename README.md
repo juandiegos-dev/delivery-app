@@ -1,345 +1,721 @@
+# Delivery App — Plataforma de Delivery de Comida
 
-# 🍔 Plataforma de Delivery de Comida
+**Universidad de Huánuco | Ingeniería de Sistemas e Informática**
 
-**Universidad de Huánuco — Ingeniería de Software (2026)**
+**Ingeniería de Software — Hito Final 2026 — Grupo 1**
 
-Sistema de delivery de comida desarrollado con Python, Django y Django REST Framework, que permite conectar clientes, restaurantes y repartidores.
+## 1. Descripción del proyecto
 
-Este proyecto es desarrollado de manera colaborativa por cinco integrantes, utilizando Git y GitHub para el control de versiones.
+Delivery App es una aplicación web que permite conectar clientes,
+restaurantes y repartidores mediante una plataforma centralizada
+para la gestión de pedidos de comida.
 
-## 🛠️ Tecnologías utilizadas
+El sistema permite consultar restaurantes, gestionar productos,
+realizar pedidos, calcular tarifas de envío según la demanda,
+asignar repartidores según su cercanía, consultar ubicaciones GPS
+y recibir notificaciones sobre el estado de los pedidos.
 
-- Python
-- Django
-- Django REST Framework
-- SQLite (base de datos local)
-- Git y GitHub
-- Visual Studio Code
+El proyecto fue desarrollado colaborativamente por cinco integrantes,
+utilizando Git y GitHub como herramientas de control de versiones.
 
-## 📁 Estructura del proyecto
+## 2. Tecnologías utilizadas
+
+| Tecnología | Versión o descripción |
+|---|---|
+| Python | 3.12 |
+| Django | 5.1.4 |
+| Django REST Framework | 3.15.2 |
+| SQLite | Base de datos relacional local |
+| HTML | Estructura de interfaces |
+| CSS | Diseño de interfaces |
+| JavaScript | Interactividad y consumo de API |
+| Geolocalización GPS | Seguimiento de repartidores |
+| Git | Control de versiones |
+| GitHub | Repositorio colaborativo |
+| Visual Studio Code | Entorno de desarrollo |
+
+## 3. Funcionalidades del sistema
+
+### Cliente
+
+- Registro de cuenta.
+- Inicio y cierre de sesión.
+- Consulta de restaurantes.
+- Visualización de menús y productos disponibles.
+- Creación de pedidos.
+- Consulta de tarifas de envío.
+- Consulta del historial de pedidos.
+- Seguimiento de estados.
+- Cancelación de pedidos según las reglas del negocio.
+- Seguimiento de la ubicación del repartidor asignado.
+- Recepción de notificaciones.
+
+### Restaurante
+
+- Registro e inicio de sesión.
+- Registro y consulta de su restaurante.
+- Creación, consulta, actualización y eliminación de productos.
+- Gestión de disponibilidad de productos.
+- Recepción de pedidos.
+- Aceptación y rechazo de pedidos.
+- Actualización de estados de preparación.
+- Registro de ubicación GPS.
+- Cancelación de pedidos autorizados.
+- Registro de incidencias y pedidos fallidos.
+- Recepción de notificaciones.
+
+### Repartidor
+
+- Registro e inicio de sesión.
+- Registro y actualización de ubicación GPS.
+- Control de disponibilidad.
+- Recepción de pedidos asignados.
+- Consulta del pedido asignado.
+- Inicio del reparto.
+- Confirmación de entrega.
+- Actualización del recorrido GPS.
+- Recepción de notificaciones.
+
+### Funcionalidades generales
+
+- Autenticación mediante token.
+- Control de permisos según el rol del usuario.
+- Validación de datos.
+- Asignación automática de repartidores mediante Haversine.
+- Cálculo de tarifas dinámicas según demanda.
+- Gestión de incidencias.
+- Notificaciones internas.
+- Protección de contraseñas mediante hash.
+- Pruebas automatizadas.
+
+## 4. Arquitectura del sistema
+
+El proyecto utiliza una arquitectura cliente-servidor.
+
+La interfaz web consume los servicios proporcionados por una API REST
+desarrollada con Django REST Framework.
+
+El backend contiene la lógica del negocio, las validaciones,
+los permisos y la comunicación con la base de datos SQLite
+mediante el ORM de Django.
+
+```text
+Usuario
+   |
+Interfaz web (HTML, CSS y JavaScript)
+   |
+API REST (Django REST Framework)
+   |
+Lógica del negocio (Django)
+   |
+ORM de Django
+   |
+Base de datos SQLite
+```
+
+## 5. Estructura del proyecto
 
 ```text
 delivery-app/
-│
-├── accesos/             # Registro, autenticación y usuarios
-├── catalogo/            # Restaurantes, menús y productos
-├── pedidos/             # Registro y gestión de pedidos
-├── config/              # Configuración principal de Django
-├── manage.py            # Administración del proyecto
-├── requirements.txt     # Dependencias de Python
-├── .gitignore
-└── README.md
+|
+|-- accesos/
+|   |-- models.py
+|   |-- serializers.py
+|   |-- views.py
+|   |-- urls.py
+|   |-- tests.py
+|   |-- migrations/
+|
+|-- catalogo/
+|   |-- models.py
+|   |-- serializers.py
+|   |-- views.py
+|   |-- urls.py
+|   |-- migrations/
+|
+|-- pedidos/
+|   |-- models.py
+|   |-- serializers.py
+|   |-- services.py
+|   |-- tarifas.py
+|   |-- cancelaciones.py
+|   |-- views.py
+|   |-- urls.py
+|   |-- migrations/
+|
+|-- repartidores/
+|   |-- models.py
+|   |-- services.py
+|   |-- entregas.py
+|   |-- vistas_gps.py
+|   |-- urls.py
+|   |-- migrations/
+|
+|-- notificaciones/
+|   |-- models.py
+|   |-- services.py
+|   |-- views.py
+|   |-- urls.py
+|   |-- migrations/
+|
+|-- frontend/
+|-- config/
+|-- docs/
+|   |-- Manual_Instalacion_Ejecucion.docx
+|   |-- Hito_Final_Grupo1.docx
+|
+|-- crear_base_datos.py
+|-- cargar_datos_prueba.py
+|-- manage.py
+|-- requirements.txt
+|-- README.md
+|-- .gitignore
 ```
 
-## 🚀 Instalación inicial (primera vez)
+## 6. Módulos del sistema
 
-Cada integrante debe realizar estos pasos en su propia computadora.
+| Módulo | Responsabilidad |
+|---|---|
+| Accesos | Registro, autenticación y gestión de usuarios |
+| Catálogo | Gestión de restaurantes, productos y menús |
+| Pedidos | Creación, estados, tarifas, cancelaciones e incidencias |
+| Repartidores | Asignación, GPS, seguimiento y confirmación de entregas |
+| Notificaciones | Comunicación de eventos relacionados con los pedidos |
+| Frontend | Interfaz web e interacción con la API REST |
 
-### 1. Clonar el repositorio desde VS Code
+## 7. Requisitos de instalación
 
-1. Abrir Visual Studio Code.
-2. Presionar `Ctrl + Shift + P`.
-3. Buscar `Git: Clone`.
-4. Pegar el enlace:
+Antes de instalar el proyecto, se requiere:
 
-```text
-https://github.com/juandiegos-dev/delivery-app.git
-```
+- Python 3.12.
+- Git.
+- Visual Studio Code o cualquier editor de código.
+- Navegador web actualizado.
+- Conexión a Internet para descargar las dependencias.
+- Permisos de ubicación del navegador para las funciones GPS.
 
-5. Seleccionar una carpeta donde guardar el proyecto.
-6. Presionar **Open** para abrirlo.
+SQLite se encuentra integrado con Python y no requiere instalar
+un servidor de base de datos adicional.
 
-También se puede clonar desde la terminal:
+## 8. Instalación y ejecución
+
+Las siguientes instrucciones están orientadas a Windows
+utilizando PowerShell.
+
+### 8.1. Clonar el repositorio
 
 ```powershell
 git clone https://github.com/juandiegos-dev/delivery-app.git
 cd delivery-app
 ```
 
-### 2. Configurar Git
-
-Cada integrante debe configurar su propio nombre y correo vinculado a GitHub.
+### 8.2. Seleccionar la rama principal
 
 ```powershell
-git config --global user.name "Tu Nombre"
-git config --global user.email "tu_correo@gmail.com"
+git switch main
 ```
 
-### 3. Crear el entorno virtual
+### 8.3. Crear el entorno virtual
 
 ```powershell
-python -m venv env
+py -3.12 -m venv .venv312
 ```
 
-Activar el entorno:
+### 8.4. Activar el entorno virtual
 
 ```powershell
-.\env\Scripts\Activate.ps1
+.\.venv312\Scripts\Activate.ps1
 ```
 
-Si PowerShell bloquea la activación:
+Si PowerShell bloquea la activación, ejecutar:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\env\Scripts\Activate.ps1
+.\.venv312\Scripts\Activate.ps1
 ```
 
-Cuando el entorno esté activado aparecerá `(env)` al inicio de la terminal.
-
-**Importante:** cada integrante crea su propio `env`. Esta carpeta no se sube a GitHub.
-
-### 4. Instalar dependencias
+### 8.5. Instalar las dependencias
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-### 5. Preparar la base de datos
+### 8.6. Configurar la clave privada de Django
+
+Por seguridad, el proyecto no almacena la clave privada de Django
+directamente en el código fuente.
+
+La clave debe configurarse mediante una variable de entorno:
+
+```powershell
+$env:DJANGO_SECRET_KEY = python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+La variable permanecerá disponible durante la sesión actual
+de PowerShell.
+
+Si se abre una nueva terminal, será necesario volver a configurar
+la variable antes de ejecutar Django.
+
+Para una instalación permanente, se recomienda conservar una clave
+propia y segura en la configuración local del entorno.
+
+No compartir ni subir esta clave al repositorio.
+
+### 8.7. Crear la base de datos
+
+Ejecutar el script de creación de la base de datos:
+
+```powershell
+python crear_base_datos.py
+```
+
+El script ejecuta las migraciones de Django y crea las tablas,
+relaciones y restricciones correspondientes.
+
+También es posible ejecutar directamente:
 
 ```powershell
 python manage.py migrate
 ```
 
-### 6. Ejecutar el servidor
+### 8.8. Cargar datos de demostración
 
 ```powershell
-python manage.py runserver
+python cargar_datos_prueba.py
 ```
 
-Abrir en el navegador:
+El script genera un conjunto de datos ficticios para demostrar
+las funcionalidades del sistema.
 
-http://127.0.0.1:8000/
+| Información | Cantidad |
+|---|---:|
+| Clientes | 10 |
+| Restaurantes | 5 |
+| Productos | 30 |
+| Repartidores | 5 |
+| Pedidos | 20 |
 
-Para detener el servidor, presionar `Ctrl + C`.
+También se generan:
 
----
+- Notificaciones.
+- Asignaciones de repartidores.
+- Incidencias de pedidos.
+- Coordenadas GPS simuladas.
+- Historiales de ubicación.
+- Pedidos en diferentes estados.
 
-## 🌿 Ramas de trabajo
+Durante la primera ejecución, el script solicitará una contraseña
+local para las cuentas nuevas.
 
-Cada integrante debe trabajar en su propia rama, sin modificar directamente `main`.
+La contraseña deberá cumplir las validaciones de seguridad
+establecidas por Django.
 
-| Integrante | Rama | Responsabilidad |
-|---|---|---|
-| Diego Sabino | `feature/catalogo` | Consulta de restaurantes y menús |
-| Francklin Masgo | `feature/modelos` | Modelos y base de datos |
-| Víctor Ureta | `feature/acceso` | Registro y autenticación |
-| Yazmin Gomero | `feature/pedidos` | Gestión de pedidos |
-| Freddy Gayoso | `feature/crud-productos` | CRUD de productos |
+No se incluyen contraseñas reales en el código fuente.
 
-### Crear una rama por primera vez
+Los datos generados corresponden únicamente a escenarios ficticios
+de demostración académica.
 
-Primero actualizar la rama principal:
-
-```powershell
-git switch main
-git pull origin main
-```
-
-Después crear la rama correspondiente. Por ejemplo:
-
-```powershell
-git switch -c feature/catalogo
-```
-
-Publicarla en GitHub:
-
-```powershell
-git push -u origin feature/catalogo
-```
-
-**Nota:** reemplazar `feature/catalogo` por la rama asignada. Si la rama ya existe, cambiar a ella en lugar de crearla nuevamente.
-
----
-
-## 💻 Trabajo diario
-
-Cada vez que un integrante vaya a programar, debe realizar lo siguiente.
-
-### 1. Abrir el proyecto y activar el entorno
-
-```powershell
-.\env\Scripts\Activate.ps1
-```
-
-### 2. Entrar a su rama
-
-Ejemplo:
-
-```powershell
-git switch feature/catalogo
-```
-
-### 3. Descargar actualizaciones de su rama
-
-```powershell
-git pull --ff-only
-```
-
-### 4. Programar
-
-Modificar los archivos correspondientes a su módulo y guardar con `Ctrl + S`.
-
-### 5. Revisar los archivos modificados
-
-```powershell
-git status
-```
-
-### 6. Preparar los cambios
-
-```powershell
-git add .
-```
-
-### 7. Crear un commit
-
-```powershell
-git commit -m "Agrega funcionalidad del catalogo"
-```
-
-### 8. Subir los cambios a GitHub
-
-```powershell
-git push
-```
-
-### Resumen de comandos diarios
-
-```powershell
-git status
-git add .
-git commit -m "Descripcion del avance"
-git push
-```
-
-Se recomienda realizar commits pequeños, con mensajes que expliquen claramente qué se implementó.
-
----
-
-## 🔄 Actualizar la rama con cambios de los compañeros
-
-Cuando los cambios de otros integrantes ya estén integrados en `main`, se pueden incorporar a la rama personal.
-
-Primero guardar o confirmar los cambios locales pendientes.
-
-```powershell
-git switch main
-git pull origin main
-```
-
-Volver a la rama personal:
-
-```powershell
-git switch feature/catalogo
-```
-
-Integrar las actualizaciones:
-
-```powershell
-git merge main
-```
-
-Si aparecen conflictos, resolverlos antes de continuar.
-
-Finalmente:
-
-```powershell
-git push
-```
-
-**No es necesario volver a clonar el repositorio.**
-
----
-
-## 🔀 Pull Requests
-
-Cuando un integrante termine una funcionalidad:
-
-1. Realizar `git add`, `git commit` y `git push`.
-2. Entrar al repositorio en GitHub.
-3. Seleccionar **Pull requests**.
-4. Presionar **New pull request**.
-5. Seleccionar `base: main`.
-6. Seleccionar `compare: feature/nombre-rama`.
-7. Presionar **Create pull request**.
-8. Solicitar la revisión de otro integrante.
-9. Integrar los cambios con **Merge pull request** cuando estén correctos.
-
-Los Pull Requests permiten integrar el trabajo de manera organizada y conservar evidencia de la colaboración.
-
----
-
-## 🧪 Pruebas del proyecto
-
-Antes de subir una funcionalidad, comprobar que Django no presente errores:
+### 8.9. Verificar la configuración
 
 ```powershell
 python manage.py check
 ```
 
-Ejecutar las pruebas automatizadas existentes:
+### 8.10. Iniciar el servidor
 
 ```powershell
-python manage.py test
+python manage.py runserver
 ```
 
-También se realizarán pruebas manuales para verificar los flujos principales de cada módulo.
+Ingresar desde el navegador:
 
-## 📋 Hito 2 — Requisitos
+http://127.0.0.1:8000/
 
-Para cumplir con el segundo hito de Ingeniería de Software se debe presentar:
+Para detener el servidor:
 
-- Un avance del proyecto igual o superior al 30 %, sustentado en una tabla de funcionalidades.
-- Al menos dos módulos funcionales a nivel básico.
-- Un repositorio GitHub actualizado.
-- Commits individuales de los cinco integrantes.
-- Un informe grupal en Word con los avances individuales.
-- Evidencias de funcionamiento y pruebas.
+```text
+Ctrl + C
+```
 
-Se recomiendan al menos **3 commits por integrante, realizados en 2 días diferentes**.
+## 9. Cuentas de demostración
 
-Cada módulo debe contar con un mínimo de cinco pruebas manuales:
+Las siguientes cuentas se generan mediante el script
+cargar_datos_prueba.py.
 
-- Dos casos normales.
-- Dos casos con datos inválidos.
-- Un caso con datos límite.
-
-## ⚠️ Reglas de colaboración
-
-1. Cada integrante trabaja desde su propia cuenta de GitHub.
-2. No realizar modificaciones directamente en `main`.
-3. No subir la carpeta `env/`.
-4. No subir contraseñas ni archivos `.env` con información privada.
-5. Mantener actualizado `requirements.txt` cuando se agreguen dependencias.
-6. Utilizar mensajes de commit descriptivos.
-7. Revisar los Pull Requests antes de integrarlos.
-8. No modificar los modelos o configuraciones de otro integrante sin coordinación.
-9. Registrar las pruebas y capturas del trabajo realizado.
-10. Mantener la documentación actualizada.
-
----
-
-## 👥 Integrantes
-
-| Integrante | Responsabilidad |
+| Usuario | Rol |
 |---|---|
-| Diego Sabino Juan Clint | Backend — Catálogo y representante |
-| Masgo Viera Francklin | Backend — Modelos de datos |
-| Ureta Soto Víctor Fernando | Backend — Acceso |
-| Gomero Céspedes Yazmin Zamira | Backend — Pedidos |
-| Gayoso Remigio Freddy | Backend — CRUD de productos |
+| lucia.mendoza | Cliente |
+| mateo.rios | Cliente |
+| valeria.salas | Cliente |
+| el.dorado | Restaurante |
+| la.toscana | Restaurante |
+| dragon.oriental | Restaurante |
+| burger.house | Restaurante |
+| sazon.huanuquena | Restaurante |
+| marco.quispe | Repartidor |
+| elena.arias | Repartidor |
+| bruno.lopez | Repartidor |
+| sofia.reyes | Repartidor |
+| diego.ortiz | Repartidor |
 
-## 📚 Información académica
+La contraseña corresponde a la ingresada durante la ejecución
+del script de datos.
 
-**Universidad:** Universidad de Huánuco  
-**Escuela profesional:** Ingeniería de Sistemas e Informática  
-**Curso:** Ingeniería de Software  
-**Docente:** Mg. Omar Sulca Correa  
-**Proyecto:** Análisis y diseño de una plataforma de delivery de comida  
-**Año:** 2026
+Las cuentas existentes conservan su contraseña.
+
+## 10. Restaurantes de demostración
+
+| Restaurante | Tipo de comida |
+|---|---|
+| Pollería El Dorado | Pollos a la brasa |
+| Pizzería La Toscana | Pizzas |
+| Chifa Dragón Oriental | Comida oriental |
+| Burger House | Hamburguesas y comida rápida |
+| Sazón Huanuqueña | Comida regional |
+
+Cada restaurante incluye seis productos con sus respectivas
+descripciones, precios y disponibilidad.
+
+Los nombres comerciales y las ubicaciones utilizadas son ficticios
+o simulados para fines académicos.
+
+## 11. Rutas principales de la interfaz
+
+| Ruta | Descripción |
+|---|---|
+| / | Página principal |
+| /login/ | Inicio de sesión |
+| /registro/ | Registro de usuarios |
+| /restaurantes/ | Catálogo de restaurantes |
+| /mis-pedidos/ | Pedidos del cliente |
+| /panel-restaurante/ | Panel del restaurante |
+| /panel-repartidor/ | Panel del repartidor |
+| /ubicacion/ | Gestión de ubicación GPS |
+| /seguimiento/{pedido_id}/ | Seguimiento de pedidos |
+| /admin/ | Administración de Django |
+
+## 12. Endpoints de la API REST
+
+### Accesos
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| POST | /api/auth/registro/ | Registro de usuarios |
+| POST | /api/auth/login/ | Autenticación y generación de token |
+| GET | /api/auth/yo/ | Consulta del usuario autenticado |
+
+### Catálogo
+
+| Endpoint | Descripción |
+|---|---|
+| /api/restaurantes/ | Gestión y listado de restaurantes |
+| /api/restaurantes/mi-restaurante/ | Restaurante del propietario |
+| /api/productos/mis-productos/ | Productos del propietario |
+| /api/restaurantes/{id}/menu/ | Menú del restaurante |
+| /api/restaurantes/{id}/productos/ | Registro de productos |
+| /api/productos/{id}/ | Consulta, modificación y eliminación |
+
+### Pedidos
+
+| Endpoint | Descripción |
+|---|---|
+| /api/pedidos/ | Creación de pedidos |
+| /api/pedidos/mis-pedidos/ | Pedidos del cliente |
+| /api/pedidos/recibidos/ | Pedidos del restaurante |
+| /api/pedidos/{id}/ | Detalle del pedido |
+| /api/pedidos/{id}/estado/ | Actualización del estado |
+| /api/pedidos/{id}/cancelar/ | Cancelación del pedido |
+| /api/pedidos/{id}/fallido/ | Registro de pedido fallido |
+| /api/pedidos/cotizar/{id}/ | Cotización de envío |
+
+### Repartidores
+
+| Endpoint | Descripción |
+|---|---|
+| /api/repartidores/mi-ubicacion/ | Ubicación del repartidor |
+| /api/repartidores/mis-asignaciones/ | Pedidos asignados |
+| /api/repartidores/restaurantes/{id}/ubicacion/ | GPS del restaurante |
+| /api/repartidores/pedidos/{id}/asignacion/ | Repartidor asignado |
+| /api/repartidores/pedidos/{id}/ubicacion/ | Ubicación asignada |
+| /api/repartidores/pedidos/{id}/ruta/ | Consulta del recorrido GPS |
+| /api/repartidores/pedidos/{id}/iniciar-reparto/ | Inicio del reparto |
+| /api/repartidores/pedidos/{id}/confirmar-entrega/ | Confirmación de entrega |
+
+### Notificaciones
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | /api/notificaciones/ | Notificaciones del usuario |
+
+Los endpoints protegidos requieren autenticación y los permisos
+correspondientes al rol del usuario.
+
+## 13. Autenticación
+
+El sistema utiliza TokenAuthentication de Django REST Framework.
+
+Después de iniciar sesión, la API devuelve un token de autenticación.
+
+Las solicitudes a rutas protegidas deben incluir la cabecera:
+
+```text
+Authorization: Token <token_del_usuario>
+```
+
+Los permisos del backend restringen las operaciones según el rol
+y la participación del usuario en cada pedido.
+
+## 14. Estados de los pedidos
+
+| Estado | Descripción |
+|---|---|
+| PENDIENTE | Pedido registrado y pendiente de revisión |
+| ACEPTADO | Pedido aceptado por el restaurante |
+| RECHAZADO | Pedido rechazado por el restaurante |
+| EN_PREPARACION | Pedido en preparación |
+| LISTO | Pedido preparado para reparto |
+| EN_CAMINO | Pedido en proceso de entrega |
+| ENTREGADO | Entrega confirmada |
+| CANCELADO | Pedido cancelado |
+| FALLIDO | Pedido con una incidencia que impide su finalización |
+
+Flujo principal:
+
+```text
+PENDIENTE
+    |
+ACEPTADO
+    |
+EN_PREPARACION
+    |
+LISTO
+    |
+EN_CAMINO
+    |
+ENTREGADO
+```
+
+Las cancelaciones, rechazos y fallos se gestionan de acuerdo
+con las reglas de transición y permisos implementados.
+
+## 15. Asignación automática de repartidores
+
+Cuando un pedido cambia al estado LISTO, el sistema consulta
+los repartidores disponibles que cuentan con coordenadas GPS.
+
+Mediante la fórmula de Haversine, se calcula la distancia
+entre el restaurante y cada repartidor disponible.
+
+Se selecciona al repartidor más cercano y se registra
+la asignación correspondiente.
+
+El repartidor permanece ocupado durante la entrega y vuelve
+a estar disponible al confirmar su finalización.
+
+## 16. Tarifas dinámicas
+
+El costo del envío se determina según la cantidad de pedidos
+activos del restaurante.
+
+| Pedidos activos | Factor | Costo de envío |
+|---|---:|---:|
+| De 0 a 4 | 1.0 | S/ 5.00 |
+| De 5 a 9 | 1.5 | S/ 7.50 |
+| 10 o más | 2.0 | S/ 10.00 |
+
+La tarifa se calcula durante la creación del pedido.
+
+```text
+Subtotal = Suma de los precios por cantidad
+Total = Subtotal + Costo de envío
+```
+
+Los pedidos en estados terminales no se consideran activos
+para el cálculo de la tarifa.
+
+## 17. Base de datos
+
+El proyecto utiliza SQLite y el ORM de Django.
+
+Las entidades principales son:
+
+- Usuario.
+- Restaurante.
+- Producto.
+- Pedido.
+- DetallePedido.
+- IncidenciaPedido.
+- PuntoRestaurante.
+- PerfilRepartidor.
+- Asignacion.
+- HistorialUbicacion.
+- Notificacion.
+
+Las relaciones y restricciones se encuentran definidas
+en los modelos y migraciones de cada aplicación.
+
+### Scripts incluidos
+
+| Archivo | Función |
+|---|---|
+| crear_base_datos.py | Ejecuta las migraciones y prepara la base de datos |
+| cargar_datos_prueba.py | Genera información ficticia relacionada para demostraciones |
+
+El archivo db.sqlite3 se genera localmente y no se incluye
+en el repositorio.
+
+## 18. Pruebas automatizadas
+
+El proyecto incorpora pruebas automatizadas mediante Django TestCase
+y las herramientas de pruebas de Django REST Framework.
+
+Para ejecutar todas las pruebas:
+
+```powershell
+python manage.py test -v 2
+```
+
+### Pruebas por módulo
+
+```powershell
+python manage.py test accesos -v 2
+python manage.py test catalogo -v 2
+python manage.py test pedidos -v 2
+python manage.py test repartidores -v 2
+python manage.py test notificaciones -v 2
+python manage.py test frontend -v 2
+```
+
+### Distribución de pruebas
+
+| Módulo | Cantidad |
+|---|---:|
+| Accesos | 8 |
+| Catálogo | 15 |
+| Pedidos | 30 |
+| Repartidores | 14 |
+| Notificaciones | 3 |
+| Frontend | 3 |
+| Total | 73 |
+
+Las pruebas incluyen casos normales, datos inválidos,
+condiciones límite, autenticación, permisos e integración
+entre módulos.
+
+Los resultados de ejecución y las evidencias manuales
+se documentan en el informe final del proyecto.
+
+## 19. Seguridad
+
+El sistema incorpora las siguientes medidas:
+
+- Autenticación mediante token.
+- Contraseñas almacenadas mediante hash.
+- Validación de contraseñas.
+- Validación de datos recibidos mediante serializadores.
+- Permisos según el rol del usuario.
+- Protección de pedidos y notificaciones privadas.
+- Restricción de operaciones sobre recursos de otros usuarios.
+- Validación de coordenadas geográficas.
+- Uso de variables de entorno para la clave privada de Django.
+- Exclusión de archivos locales y sensibles mediante .gitignore.
+
+El proyecto está configurado para desarrollo y demostración académica.
+
+Antes de utilizarlo en producción, se requiere configurar HTTPS,
+desactivar DEBUG y establecer los parámetros de seguridad
+correspondientes al entorno de despliegue.
+
+## 20. Limitaciones del sistema
+
+- La asignación automática requiere repartidores disponibles
+  y coordenadas GPS registradas.
+- Si no existe un repartidor disponible al cambiar el pedido
+  a LISTO, la asignación automática puede quedar pendiente.
+- El cálculo Haversine representa una distancia geográfica
+  aproximada y no una distancia real por calles.
+- El seguimiento representa coordenadas registradas y no incluye
+  estimación avanzada del tiempo de llegada.
+- La geolocalización depende de los permisos del navegador.
+- SQLite está orientado al entorno local de demostración.
+
+Las limitaciones relacionadas con los requerimientos se detallan
+en la matriz de trazabilidad del informe final.
+
+## 21. Integrantes del Grupo 1
+
+| Integrante | Usuario de GitHub | Responsabilidades principales |
+|---|---|---|
+| Diego Sabino Juan Clin | juandiegos-dev | Catálogo, creación de pedidos, integración e interfaz |
+| Masgo Viera Francklin | 2024110730-hue | Modelos, asignación y gestión de entregas |
+| Gomero Cespedes Yazmin Zamira | 2024110779-byte | Estados, gestión y cancelación de pedidos |
+| Gayoso Remigio Freddy | gayosofreddy79-max | Productos, tarifas, notificaciones e incidencias |
+| Ureta Soto Víctor Fernando | 2024110709-sys | Autenticación, permisos y seguimiento GPS |
+
+Todos los integrantes participaron mediante ramas individuales,
+commits y Pull Requests.
+
+## 22. Control de versiones
+
+El proyecto fue desarrollado utilizando Git y GitHub.
+
+La rama principal contiene los módulos integrados.
+
+Los integrantes desarrollaron sus funcionalidades en ramas
+individuales y utilizaron Pull Requests para incorporar
+sus cambios al proyecto.
+
+Repositorio:
+
+https://github.com/juandiegos-dev/delivery-app
+
+Historial de commits:
+
+https://github.com/juandiegos-dev/delivery-app/commits/main/
+
+Pull Requests:
+
+https://github.com/juandiegos-dev/delivery-app/pulls
+
+Contribuciones:
+
+https://github.com/juandiegos-dev/delivery-app/graphs/contributors
+
+## 23. Documentación
+
+La carpeta docs/ está destinada a contener los siguientes documentos
+correspondientes a la entrega final:
+
+- Manual de instalación y ejecución.
+- Informe final del Grupo 1.
+
+El informe final incluye:
+
+- Análisis y diseño del sistema.
+- Requerimientos funcionales y no funcionales.
+- Diagramas UML.
+- Modelo entidad-relación.
+- Diccionario de datos.
+- Informes individuales.
+- Matriz de trazabilidad.
+- Registro de cambios.
+- Casos de prueba.
+- Evaluación de contribuciones.
+- Evidencias del proyecto.
+
+## 24. Información académica
+
+- Universidad: Universidad de Huánuco.
+- Escuela profesional: Ingeniería de Sistemas e Informática.
+- Curso: Ingeniería de Software.
+- Docente: Mg. Omar Sulca Correa.
+- Grupo: 1.
+- Proyecto: Plataforma de Delivery de Comida.
+- Entrega: Hito Final.
+- Año: 2026.
 
 ---
 
-**Repositorio oficial:** https://github.com/juandiegos-dev/delivery-app
-
-**Nota:** Las funcionalidades descritas corresponden al alcance y organización del proyecto. Su implementación y estado de avance se verifican mediante el código, las pruebas y las evidencias de cada hito.
+Proyecto desarrollado con fines académicos por estudiantes
+de Ingeniería de Sistemas e Informática de la Universidad de Huánuco.
